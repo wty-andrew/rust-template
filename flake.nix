@@ -18,19 +18,21 @@
           overlays = [
             (import rust-overlay)
           ];
+          config.allowUnfree = true;
         }
       ));
     in
     {
       devShells = forAllSystems (pkgs: with pkgs; {
-        default = mkShell {
-          nativeBuildInputs = [
+        default = mkShell.override { stdenv = gcc12Stdenv; } {
+          buildInputs = [
             (rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
+            rust-analyzer
+            cudaPackages.cudnn
           ];
 
-          buildInputs = [
-            rust-analyzer
-          ];
+          CUDA_ROOT = "${cudatoolkit}";
+          CUDNN_LIB = "${cudaPackages.cudnn}";
         };
       });
 
