@@ -23,12 +23,12 @@
     in
     {
       devShells = forAllSystems (pkgs: with pkgs; {
-        default = mkShell {
-          nativeBuildInputs = [
+        default = pkgsCross.aarch64-multiplatform.mkShell {
+          nativeBuildInputs = with pkgsBuildHost; [
             (rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
           ];
 
-          buildInputs = [
+          packages = with pkgsBuildHost; [
             rust-analyzer
           ];
         };
