@@ -30,6 +30,7 @@
 
           packages = with pkgsBuildHost; [
             rust-analyzer
+            gdb
           ];
         };
       });

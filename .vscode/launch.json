@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Remote Debug",
+      "type": "lldb",
+      "request": "custom",
+      "targetCreateCommands": ["target create ${workspaceFolder}/target/aarch64-unknown-linux-gnu/debug/sandbox"],
+      "processCreateCommands": ["gdb-remote ${env:TARGET_HOST}:${env:TARGET_PORT}"]
+    }
+  ]
+}

@@ -1,5 +1,4 @@
-dev:
-  @cargo watch -x check -x test -x run
+set dotenv-load
 
 lint:
   @cargo clippy
@@ -13,11 +12,11 @@ check:
 build:
   @cargo build
 
-test:
-  @cargo test
-
-run:
-  @cargo run
-
 clean:
   @cargo clean
+
+copy: build
+  @scp {{justfile_directory()}}/target/aarch64-unknown-linux-gnu/debug/sandbox $TARGET_HOST:$TARGET_PATH
+
+start-gdbserver:
+  @ssh $TARGET_HOST "nohup gdbserver :${TARGET_PORT} ${TARGET_PATH}"
