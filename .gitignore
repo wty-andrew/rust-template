@@ -3,3 +3,6 @@ target/
 
 # Nix
 result
+
+telemetry_data/*
+!telemetry_data/.gitkeep

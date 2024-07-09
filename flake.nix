@@ -25,12 +25,16 @@
       devShells = forAllSystems (pkgs: with pkgs; {
         default = mkShell {
           nativeBuildInputs = [
+            pkg-config
             (rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
           ];
 
           buildInputs = [
+            openssl
             rust-analyzer
           ];
+
+          OTEL_SERVICE_NAME = "sandbox";
         };
       });
 

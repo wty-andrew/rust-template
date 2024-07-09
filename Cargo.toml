@@ -4,3 +4,23 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.83"
+axum = "0.7.5"
+clap = { version = "4.5.4", features = ["derive"] }
+config = "0.14.0"
+opentelemetry = { version = "0.23.0", features = ["trace", "metrics", "logs"] }
+opentelemetry-appender-tracing = { version = "0.4.0", features = ["log"], default-features = false }
+opentelemetry-otlp = { version = "0.16.0", features = ["tonic", "trace", "logs", "metrics"] }
+opentelemetry_sdk = { version = "0.23.0", features = ["rt-tokio", "trace", "metrics", "logs"] }
+serde = { version = "1.0.201", features = ["derive"] }
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread", "signal"] }
+tonic = "0.11.0"
+tower = "0.4.13"
+tower-http = { version = "0.5.2", features = ["trace", "request-id", "util"] }
+tracing = "0.1.40"
+tracing-opentelemetry = { git = "https://github.com/tokio-rs/tracing-opentelemetry" }
+tracing-subscriber = { version = "0.3.18", features = ["registry", "env-filter"] }
+uuid = { version = "1.8.0", features = ["v4"] }
+
+[dev-dependencies]
+reqwest = "0.12.4"
