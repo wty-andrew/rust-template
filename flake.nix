@@ -29,13 +29,17 @@
           ];
 
           buildInputs = [
+            espflash
+            ldproxy
+            probe-rs
+            python3
+            python3Packages.pip
+            python3Packages.virtualenv
             rust-analyzer
           ];
-        };
-      });
 
-      packages = forAllSystems (pkgs: {
-        default = pkgs.callPackage ./default.nix { };
+          LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
+        };
       });
     };
 }

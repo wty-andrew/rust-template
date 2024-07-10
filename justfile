@@ -1,5 +1,5 @@
-dev:
-  @cargo watch -x check -x test -x run
+default:
+  @just -l
 
 lint:
   @cargo clippy
