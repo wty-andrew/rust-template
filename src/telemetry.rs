@@ -1,4 +1,8 @@
-use opentelemetry::{global, logs::LogError, trace::TraceError};
+use opentelemetry::{
+    global,
+    logs::LogError,
+    trace::{TraceError, TracerProvider},
+};
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
 use opentelemetry_sdk::{
     logs::LoggerProvider, metrics::SdkMeterProvider, propagation::TraceContextPropagator, runtime,
@@ -27,11 +31,11 @@ impl Drop for OtelGuard {
     }
 }
 
-fn init_tracer() -> Result<sdktrace::Tracer, TraceError> {
+fn init_tracer_provider() -> Result<sdktrace::TracerProvider, TraceError> {
     opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(opentelemetry_otlp::new_exporter().tonic())
-        .with_trace_config(sdktrace::config())
+        .with_trace_config(sdktrace::Config::default())
         .install_batch(runtime::Tokio)
 }
 
@@ -61,17 +65,18 @@ where
 }
 
 pub fn init_telemetry() -> Result<OtelGuard, anyhow::Error> {
-    let tracer = init_tracer()?;
+    let tracer_provider = init_tracer_provider()?;
     let meter_provider = init_meter_provider()?;
     let logger_provider = init_logger_provider()?;
 
     global::set_text_map_propagator(TraceContextPropagator::new());
+    global::set_tracer_provider(tracer_provider.clone());
     global::set_meter_provider(meter_provider.clone());
 
     tracing_subscriber::registry()
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
         .with(fmt_layer(std::io::stdout))
-        .with(OpenTelemetryLayer::new(tracer))
+        .with(OpenTelemetryLayer::new(tracer_provider.tracer("")))
         .with(MetricsLayer::new(meter_provider.clone()))
         .with(OpenTelemetryTracingBridge::new(&logger_provider))
         .init();
