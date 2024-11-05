@@ -30,7 +30,9 @@ impl TryFrom<String> for AppEnv {
 }
 
 #[derive(serde::Deserialize)]
-pub struct Settings {}
+pub struct Settings {
+    pub database_url: String,
+}
 
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {

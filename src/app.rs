@@ -1,13 +1,14 @@
 use axum::body::Body;
 use axum::http::{HeaderValue, Request};
 use axum::{routing::get, Router};
+use sqlx::PgPool;
 use tower::ServiceBuilder;
 use tower_http::request_id::{MakeRequestId, RequestId};
 use tower_http::trace::TraceLayer;
 use tower_http::ServiceBuilderExt;
 use uuid::Uuid;
 
-use crate::routes::{liveness, not_found, readiness};
+use crate::routes::{liveness, not_found, readiness, todo};
 use crate::settings::Settings;
 
 #[derive(Clone, Copy)]
@@ -23,10 +24,15 @@ impl MakeRequestId for MakeRequestUuid {
 }
 
 #[derive(Clone)]
-struct AppState {}
+pub struct AppState {
+    pub db_pool: PgPool,
+}
 
-pub fn create_app(_settings: Settings) -> Router {
-    let state = AppState {};
+pub async fn create_app(settings: Settings) -> Result<Router, anyhow::Error> {
+    let db_pool = PgPool::connect(&settings.database_url)
+        .await
+        .expect("Failed to connect to Postgres");
+    let state = AppState { db_pool };
 
     let middleware = ServiceBuilder::new()
         .set_x_request_id(MakeRequestUuid)
@@ -49,10 +55,11 @@ pub fn create_app(_settings: Settings) -> Router {
         )
         .propagate_x_request_id();
 
-    Router::new()
+    Ok(Router::new()
+        .nest("/todos", todo::router())
         .layer(middleware)
         .route("/healthz", get(liveness))
         .route("/ready", get(readiness))
         .fallback(not_found)
-        .with_state(state)
+        .with_state(state))
 }

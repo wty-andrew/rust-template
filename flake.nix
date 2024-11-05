@@ -34,6 +34,10 @@
             rust-analyzer
           ];
 
+          packages = with pkgs; [
+            sqlx-cli
+          ];
+
           OTEL_SERVICE_NAME = "sandbox";
         };
       });

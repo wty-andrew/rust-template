@@ -13,6 +13,8 @@ opentelemetry-appender-tracing = { version = "0.26.0", features = ["log"], defau
 opentelemetry-otlp = { version = "0.26.0", features = ["tonic", "trace", "logs", "metrics"] }
 opentelemetry_sdk = { version = "0.26.0", features = ["rt-tokio", "trace", "metrics", "logs"] }
 serde = { version = "1.0.214", features = ["derive"] }
+serde_json = "1.0.132"
+sqlx = { version = "0.8.2", features = ["runtime-tokio", "tls-native-tls", "postgres", "macros", "chrono"] }
 tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread", "signal"] }
 tonic = "0.12.3"
 tower = "0.5.1"
