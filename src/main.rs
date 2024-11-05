@@ -46,7 +46,7 @@ async fn shutdown_signal() {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), anyhow::Error> {
+async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let addr = format!("{}:{}", args.host, args.port);
 
@@ -55,7 +55,7 @@ async fn main() -> Result<(), anyhow::Error> {
     tracing::info!("Listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
     let settings = Settings::new()?;
-    let app = create_app(settings);
+    let app = create_app(settings).await?;
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;

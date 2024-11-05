@@ -1,4 +1,21 @@
 services:
+  postgres:
+    image: postgres:16.4-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: app
+
+  pgadmin:
+    image: dpage/pgadmin4:8.11
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@domain.com
+      PGADMIN_DEFAULT_PASSWORD: password
+
   openobserve:
     image: public.ecr.aws/zinclabs/openobserve:latest
     ports:
