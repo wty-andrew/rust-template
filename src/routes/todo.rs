@@ -1,10 +1,12 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
-use axum::{Json, Router};
+use axum::Router;
 use serde::Deserialize;
 
 use crate::app::AppState;
+use crate::error::ApiError;
+use crate::extractor::Json;
 use crate::models::todo::Todo;
 
 #[derive(Deserialize)]
@@ -21,7 +23,7 @@ struct UpdateTodoBody {
 async fn create_todo(
     State(state): State<AppState>,
     Json(body): Json<CreateTodoBody>,
-) -> (StatusCode, Json<Todo>) {
+) -> Result<(StatusCode, Json<Todo>), ApiError> {
     let row = sqlx::query!(
         r#"
             INSERT INTO todos (title)
@@ -32,39 +34,58 @@ async fn create_todo(
     )
     .fetch_one(&state.db_pool)
     .await
-    .unwrap();
+    .map_err(|e| {
+        tracing::error!("Failed to create todo: {:?}", e);
+        ApiError::InternalError(format!("{}", e))
+    })?;
 
     let todo = Todo::new(row.id, row.title.clone(), row.completed);
-    (StatusCode::CREATED, Json(todo))
+    Ok((StatusCode::CREATED, Json(todo)))
 }
 
-async fn list_todos(State(state): State<AppState>) -> (StatusCode, Json<Vec<Todo>>) {
+async fn list_todos(
+    State(state): State<AppState>,
+) -> Result<(StatusCode, Json<Vec<Todo>>), ApiError> {
     let rows = sqlx::query!("SELECT * FROM todos")
         .fetch_all(&state.db_pool)
         .await
-        .unwrap();
+        .map_err(|e| {
+            tracing::error!("Failed to list todos: {:?}", e);
+            ApiError::InternalError(format!("{}", e))
+        })?;
 
     let todos = rows
         .iter()
         .map(|row| Todo::new(row.id, row.title.clone(), row.completed))
         .collect();
-    (StatusCode::OK, Json(todos))
+    Ok((StatusCode::OK, Json(todos)))
 }
 
-async fn get_todo(State(state): State<AppState>, Path(id): Path<i32>) -> (StatusCode, Json<Todo>) {
+async fn get_todo(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+) -> Result<(StatusCode, Json<Todo>), ApiError> {
     let row = sqlx::query!("SELECT * FROM todos WHERE id = $1", id)
         .fetch_one(&state.db_pool)
         .await
-        .unwrap();
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => {
+                ApiError::NotFound(format!("Todo with id \"{}\" not found", id))
+            }
+            _ => {
+                tracing::error!("Failed to get todo: {:?}", e);
+                ApiError::InternalError(format!("{}", e))
+            }
+        })?;
     let todo = Todo::new(row.id, row.title.clone(), row.completed);
-    (StatusCode::OK, Json(todo))
+    Ok((StatusCode::OK, Json(todo)))
 }
 
 async fn update_todo(
     State(state): State<AppState>,
     Path(id): Path<i32>,
     Json(body): Json<UpdateTodoBody>,
-) -> (StatusCode, Json<Todo>) {
+) -> Result<(StatusCode, Json<Todo>), ApiError> {
     let row = sqlx::query!(
         r#"
             UPDATE todos
@@ -79,19 +100,38 @@ async fn update_todo(
     )
     .fetch_one(&state.db_pool)
     .await
-    .unwrap();
+    .map_err(|e| match e {
+        sqlx::Error::RowNotFound => {
+            ApiError::NotFound(format!("Todo with id \"{}\" not found", id))
+        }
+        _ => {
+            tracing::error!("Failed to update todo: {:?}", e);
+            ApiError::InternalError(format!("{}", e))
+        }
+    })?;
 
     let todo = Todo::new(row.id, row.title.clone(), row.completed);
-    (StatusCode::OK, Json(todo))
+    Ok((StatusCode::OK, Json(todo)))
 }
 
-async fn delete_todo(State(state): State<AppState>, Path(id): Path<i32>) -> StatusCode {
+async fn delete_todo(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+) -> Result<StatusCode, ApiError> {
     sqlx::query!("DELETE FROM todos WHERE id = $1", id)
         .execute(&state.db_pool)
         .await
-        .unwrap();
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => {
+                ApiError::NotFound(format!("Todo with id \"{}\" not found", id))
+            }
+            _ => {
+                tracing::error!("Failed to delete todo: {:?}", e);
+                ApiError::InternalError(format!("{}", e))
+            }
+        })?;
 
-    StatusCode::NO_CONTENT
+    Ok(StatusCode::NO_CONTENT)
 }
 
 pub fn router() -> Router<AppState> {
