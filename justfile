@@ -14,7 +14,7 @@ build:
   @cargo build
 
 test:
-  @cargo test
+  @DATABASE_URL=postgresql://postgres:postgres@localhost:5432 cargo test
 
 run:
   @cargo run

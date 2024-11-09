@@ -9,7 +9,6 @@ use tower_http::ServiceBuilderExt;
 use uuid::Uuid;
 
 use crate::routes::{liveness, not_found, readiness, todo};
-use crate::settings::Settings;
 
 #[derive(Clone, Copy)]
 struct MakeRequestUuid;
@@ -28,10 +27,7 @@ pub struct AppState {
     pub db_pool: PgPool,
 }
 
-pub async fn create_app(settings: Settings) -> Result<Router, anyhow::Error> {
-    let db_pool = PgPool::connect(&settings.database_url)
-        .await
-        .expect("Failed to connect to Postgres");
+pub fn create_app(db_pool: PgPool) -> Router {
     let state = AppState { db_pool };
 
     let middleware = ServiceBuilder::new()
@@ -55,11 +51,11 @@ pub async fn create_app(settings: Settings) -> Result<Router, anyhow::Error> {
         )
         .propagate_x_request_id();
 
-    Ok(Router::new()
+    Router::new()
         .nest("/todos", todo::router())
         .layer(middleware)
         .route("/healthz", get(liveness))
         .route("/ready", get(readiness))
         .fallback(not_found)
-        .with_state(state))
+        .with_state(state)
 }
