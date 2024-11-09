@@ -118,20 +118,21 @@ async fn delete_todo(
     State(state): State<AppState>,
     Path(id): Path<i32>,
 ) -> Result<StatusCode, ApiError> {
-    sqlx::query!("DELETE FROM todos WHERE id = $1", id)
+    let result = sqlx::query!("DELETE FROM todos WHERE id = $1", id)
         .execute(&state.db_pool)
         .await
-        .map_err(|e| match e {
-            sqlx::Error::RowNotFound => {
-                ApiError::NotFound(format!("Todo with id \"{}\" not found", id))
-            }
-            _ => {
-                tracing::error!("Failed to delete todo: {:?}", e);
-                ApiError::InternalError(format!("{}", e))
-            }
+        .map_err(|e| {
+            tracing::error!("Failed to delete todo: {:?}", e);
+            ApiError::InternalError(format!("{}", e))
         })?;
 
-    Ok(StatusCode::NO_CONTENT)
+    match result.rows_affected() {
+        0 => Err(ApiError::NotFound(format!(
+            "Todo with id \"{}\" not found",
+            id
+        ))),
+        _ => Ok(StatusCode::NO_CONTENT),
+    }
 }
 
 pub fn router() -> Router<AppState> {

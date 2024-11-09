@@ -18,4 +18,8 @@ rustPlatform.buildRustPackage {
   buildInputs = with pkgs; [
     openssl
   ];
+
+  doCheck = false; # require database connection
+
+  SQLX_OFFLINE = true;
 }
