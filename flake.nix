@@ -29,8 +29,10 @@
           ];
 
           buildInputs = [
+            cmake
             espflash
             ldproxy
+            ninja
             probe-rs
             python3
             python3Packages.pip

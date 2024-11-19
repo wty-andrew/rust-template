@@ -1,6 +1,12 @@
 default:
   @just -l
 
+flash:
+  @espflash flash target/riscv32imc-esp-espidf/debug/sandbox
+
+open-monitor:
+  @espflash monitor
+
 lint:
   @cargo clippy
 
