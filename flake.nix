@@ -6,36 +6,56 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = { self, nixpkgs, rust-overlay }:
-    let
-      allSystems = [ "x86_64-linux" "aarch64-linux" ];
-
-      forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f (
-        import nixpkgs {
-          inherit system;
-          overlays = [
-            (import rust-overlay)
-          ];
-        }
-      ));
-    in
-    {
-      devShells = forAllSystems (pkgs: with pkgs; {
-        default = mkShell {
+  outputs = inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-linux" ];
+      perSystem = { pkgs, system, ... }: with pkgs;
+        let
           nativeBuildInputs = [
-            (rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
+            clang
+            lld
+            pkg-config
+            ((rust-bin.fromRustupToolchainFile ./rust-toolchain.toml).override {
+              targets = [ "wasm32-unknown-unknown" ];
+            })
+            wasm-bindgen-cli
           ];
 
+          # https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md#nix
           buildInputs = [
+            alsa-lib
+            libxkbcommon
             rust-analyzer
+            udev
+            vulkan-loader
+            wayland
+            xorg.libX11
+            xorg.libXcursor
+            xorg.libXi
+            xorg.libXrandr
           ];
-        };
-      });
+        in
+        {
+          # https://github.com/hercules-ci/flake-parts/issues/106
+          _module.args.pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = [ (import inputs.rust-overlay) ];
+          };
 
-      packages = forAllSystems (pkgs: {
-        default = pkgs.callPackage ./default.nix { };
-      });
+          packages.default = callPackage ./default.nix {
+            inherit nativeBuildInputs buildInputs;
+          };
+
+          devShells.default = mkShell {
+            inherit nativeBuildInputs;
+            buildInputs = buildInputs ++ [ rust-analyzer ];
+
+            LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
+          };
+        };
     };
 }

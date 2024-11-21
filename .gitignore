@@ -1,5 +1,8 @@
 debug/
 target/
+web/*
+!web/index.html
+!web/assets
 
 # Nix
 result
