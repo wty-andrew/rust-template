@@ -1,18 +1,21 @@
-{ pkgs ? import <nixpkgs>, rustPlatform ? pkgs.rustPlatform, ... }:
+{ lib, pkgs, rustPlatform, ... }:
 let
-  manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
+  manifest = (lib.importTOML ./Cargo.toml).package;
 in
-with pkgs; rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage {
   pname = manifest.name;
   version = manifest.version;
-  cargoLock.lockFile = ./Cargo.lock;
+
   src = lib.cleanSource ./.;
 
-  nativeBuildInputs = [
+  cargoLock.lockFile = ./Cargo.lock;
+
+  nativeBuildInputs = with pkgs; [
     pkg-config
+    (rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
   ];
 
-  buildInputs = [
+  buildInputs = with pkgs; [
     openssl
   ];
 }
