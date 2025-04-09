@@ -1,19 +1,22 @@
-FROM rust:1.82-slim AS builder
+ARG ROS_DISTRO=jazzy
+FROM ros:$ROS_DISTRO AS base
+ARG DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    libclang-dev \
+    python3-pip \
+    python3-vcstool \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY Cargo.toml Cargo.lock ./
+RUN pip install --break-system-packages colcon-cargo colcon-ros-cargo
 
-RUN mkdir ./src && echo 'fn main() {}' > ./src/main.rs
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH=/root/.cargo/bin:$PATH
 
-RUN cargo build --release
+WORKDIR /ros2_ws
 
-COPY . .
+RUN mkdir src install
 
-RUN touch ./src/main.rs && cargo build --release
-
-FROM debian:bookworm-slim AS runtime
-
-WORKDIR /app
-
-COPY --from=builder /app/target/release/sandbox sandbox
+RUN curl -s https://raw.githubusercontent.com/ros2-rust/ros2_rust/main/ros2_rust_jazzy.repos | vcs import src

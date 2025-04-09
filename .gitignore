@@ -1,5 +1,5 @@
 debug/
 target/
 
-# Nix
-result
+.cargo/*
+!.cargo/config.sample.toml

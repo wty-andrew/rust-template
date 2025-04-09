@@ -1,0 +1,6 @@
+services:
+  builder:
+    build: .
+    command: ['colcon', 'build']
+    volumes:
+      - ./vendor:/ros2_ws/install
