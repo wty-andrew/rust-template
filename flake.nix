@@ -27,16 +27,17 @@
 
           # https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md#nix
           buildInputs = [
-            alsa-lib
-            libxkbcommon
             rust-analyzer
-            udev
+            alsa-lib.dev
             vulkan-loader
-            wayland
+            vulkan-tools
+            libudev-zero
             xorg.libX11
             xorg.libXcursor
             xorg.libXi
             xorg.libXrandr
+            libxkbcommon
+            wayland
           ];
         in
         {

@@ -22,8 +22,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Sprite::from_image(asset_server.load("sprites/bevy.png")));
 }
 
-fn quit(keys: Res<ButtonInput<KeyCode>>, mut writer: EventWriter<AppExit>) {
+fn quit(keys: Res<ButtonInput<KeyCode>>, mut writer: MessageWriter<AppExit>) {
     if keys.just_pressed(KeyCode::Escape) {
-        writer.send(AppExit::Success);
+        writer.write(AppExit::Success);
     }
 }
