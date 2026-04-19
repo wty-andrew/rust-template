@@ -10,10 +10,16 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs:
+  outputs =
+    inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" ];
-      perSystem = { pkgs, system, ... }: with pkgs;
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      perSystem =
+        { pkgs, system, ... }:
+        with pkgs;
         let
           nativeBuildInputs = [
             clang
@@ -22,21 +28,21 @@
             ((rust-bin.fromRustupToolchainFile ./rust-toolchain.toml).override {
               targets = [ "wasm32-unknown-unknown" ];
             })
-            wasm-bindgen-cli
+            wasm-bindgen-cli_0_2_108 # need to match the version used by bevy
           ];
 
           # https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md#nix
           buildInputs = [
             alsa-lib
-            libxkbcommon
-            rust-analyzer
-            udev
             vulkan-loader
+            vulkan-tools
+            libudev-zero
+            libx11
+            libxcursor
+            libxi
+            libxrandr
+            libxkbcommon
             wayland
-            xorg.libX11
-            xorg.libXcursor
-            xorg.libXi
-            xorg.libXrandr
           ];
         in
         {
